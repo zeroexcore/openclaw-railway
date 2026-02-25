@@ -11,8 +11,8 @@ mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 # Fix any invalid config from previous runs
 if [ -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   if grep -q '"bind": "all"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null || \
-     ! grep -q 'dangerouslyAllowHostHeaderOriginFallback' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
-    echo "[openclaw-railway] Found invalid/incomplete config, resetting..."
+     grep -q '"bind": "lan"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
+    echo "[openclaw-railway] Found insecure bind config, resetting to loopback..."
     rm -f "$OPENCLAW_STATE_DIR/openclaw.json"
   fi
 fi
@@ -21,22 +21,21 @@ fi
 if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   echo "[openclaw-railway] No config found, running initial setup..."
   
-  # Create minimal config (bind: lan for container networking)
+  # Create config with loopback binding (secure)
+  # External access is via socat proxy on port 8080
   cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
 {
   "update": {
     "channel": "stable"
   },
   "gateway": {
-    "port": 8080,
+    "port": 18789,
     "mode": "local",
-    "bind": "lan",
+    "bind": "loopback",
     "auth": {
       "mode": "token"
     },
-    "controlUi": {
-      "dangerouslyAllowHostHeaderOriginFallback": true
-    }
+    "trustedProxies": ["127.0.0.1"]
   },
   "agents": {
     "defaults": {
@@ -61,6 +60,24 @@ openclaw update status || true
 echo "[openclaw-railway] Running doctor..."
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start the gateway - use "lan" binding for containers (0.0.0.0)
-echo "[openclaw-railway] Starting gateway on port 8080..."
-exec openclaw gateway --port 8080 --bind lan
+# Start socat proxy: 0.0.0.0:8080 -> 127.0.0.1:18789
+# This allows Railway to route traffic while gateway stays on loopback
+echo "[openclaw-railway] Starting socat proxy (0.0.0.0:8080 -> 127.0.0.1:18789)..."
+socat TCP-LISTEN:8080,fork,reuseaddr TCP:127.0.0.1:18789 &
+SOCAT_PID=$!
+
+# Give socat a moment to bind
+sleep 1
+
+# Start the gateway on loopback (secure)
+echo "[openclaw-railway] Starting gateway on loopback:18789..."
+openclaw gateway --port 18789 --bind loopback &
+GATEWAY_PID=$!
+
+# Wait for either process to exit
+wait -n $SOCAT_PID $GATEWAY_PID
+
+# If one exits, kill the other and exit
+echo "[openclaw-railway] Process exited, shutting down..."
+kill $SOCAT_PID $GATEWAY_PID 2>/dev/null || true
+wait
