@@ -12,7 +12,7 @@ mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   echo "[openclaw-railway] No config found, running initial setup..."
   
-  # Create minimal config
+  # Create minimal config (bind: all for container networking)
   cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
 {
   "update": {
@@ -21,7 +21,7 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   "gateway": {
     "port": 8080,
     "mode": "local",
-    "bind": "0.0.0.0",
+    "bind": "all",
     "auth": {
       "mode": "token"
     }
@@ -49,6 +49,6 @@ openclaw update status || true
 echo "[openclaw-railway] Running doctor..."
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start the gateway
+# Start the gateway - use "all" binding for containers
 echo "[openclaw-railway] Starting gateway on port 8080..."
-exec openclaw gateway --port 8080 --bind 0.0.0.0
+exec openclaw gateway --port 8080 --bind all
