@@ -39,3 +39,4 @@ Mount a volume at `/data` for persistence.
 ## Authentication
 
 The gateway uses token auth. Set `OPENCLAW_GATEWAY_TOKEN` and use it to authenticate API requests.
+# Wed Feb 25 17:21:05 +07 2026
