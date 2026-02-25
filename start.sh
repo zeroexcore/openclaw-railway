@@ -29,6 +29,12 @@ map \$http_upgrade \$connection_upgrade {
 server {
     listen 8080;
     
+    # Health check endpoint (no auth for Railway healthcheck)
+    location /health {
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+    
     location / {
         $AUTH_BLOCK
         
