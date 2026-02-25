@@ -1,5 +1,6 @@
 FROM node:22-slim
 
+# Cache bust: 2026-02-25-v2
 # Install dependencies (nginx for auth proxy, apache2-utils for htpasswd)
 RUN apt-get update && apt-get install -y git curl nginx apache2-utils && rm -rf /var/lib/apt/lists/*
 
