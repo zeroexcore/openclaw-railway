@@ -8,22 +8,47 @@ echo "[openclaw-railway] Workspace: $OPENCLAW_WORKSPACE_DIR"
 # Ensure directories exist
 mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 
-# Fix any invalid config from previous runs
-if [ -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
-  if grep -q '"bind": "all"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null || \
-     grep -q '"bind": "lan"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
-    echo "[openclaw-railway] Found insecure bind config, resetting to loopback..."
-    rm -f "$OPENCLAW_STATE_DIR/openclaw.json"
-  fi
+# Setup nginx basic auth if credentials provided
+if [ -n "$PROXY_USER" ] && [ -n "$PROXY_PASS" ]; then
+  echo "[openclaw-railway] Configuring nginx with basic auth..."
+  htpasswd -cb /etc/nginx/.htpasswd "$PROXY_USER" "$PROXY_PASS"
+  AUTH_BLOCK='auth_basic "OpenClaw Gateway";
+        auth_basic_user_file /etc/nginx/.htpasswd;'
+else
+  echo "[openclaw-railway] WARNING: No PROXY_USER/PROXY_PASS set - proxy has no auth!"
+  AUTH_BLOCK=""
 fi
 
-# Initialize config if it doesn't exist
-if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
-  echo "[openclaw-railway] No config found, running initial setup..."
-  
-  # Create config with loopback binding (secure)
-  # External access is via socat proxy on port 8080
-  cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
+# Configure nginx as reverse proxy with WebSocket support
+cat > /etc/nginx/sites-available/default << EOF
+map \$http_upgrade \$connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen 8080;
+    
+    location / {
+        $AUTH_BLOCK
+        
+        proxy_pass http://127.0.0.1:18789;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \$connection_upgrade;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+}
+EOF
+
+# Create gateway config
+echo "[openclaw-railway] Creating gateway config..."
+cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
 {
   "update": {
     "channel": "stable"
@@ -35,21 +60,31 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
     "auth": {
       "mode": "token"
     },
-    "trustedProxies": ["127.0.0.1"]
+    "trustedProxies": ["127.0.0.1"],
+    "controlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true
+    }
   },
   "agents": {
     "defaults": {
+      "model": "minimax/MiniMax-M2.1",
       "workspace": "/data/workspace"
     }
   }
 }
 EOF
-fi
 
 # Set gateway token from env if provided
 if [ -n "$OPENCLAW_GATEWAY_TOKEN" ]; then
-  echo "[openclaw-railway] Setting gateway token from environment..."
+  echo "[openclaw-railway] Setting gateway token..."
   openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" 2>/dev/null || true
+fi
+
+# Set MiniMax API key if provided
+if [ -n "$MINIMAX_API_KEY" ]; then
+  echo "[openclaw-railway] Setting MiniMax credentials..."
+  mkdir -p "$OPENCLAW_STATE_DIR/credentials"
+  echo "{\"apiKey\": \"$MINIMAX_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/minimax.json"
 fi
 
 # Check for updates on startup (non-blocking)
@@ -60,24 +95,10 @@ openclaw update status || true
 echo "[openclaw-railway] Running doctor..."
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start socat proxy: 0.0.0.0:8080 -> 127.0.0.1:18789
-# This allows Railway to route traffic while gateway stays on loopback
-echo "[openclaw-railway] Starting socat proxy (0.0.0.0:8080 -> 127.0.0.1:18789)..."
-socat TCP-LISTEN:8080,fork,reuseaddr TCP:127.0.0.1:18789 &
-SOCAT_PID=$!
+# Start nginx
+echo "[openclaw-railway] Starting nginx proxy on :8080..."
+nginx
 
-# Give socat a moment to bind
-sleep 1
-
-# Start the gateway on loopback (secure)
+# Start the gateway on loopback (nginx proxies to it)
 echo "[openclaw-railway] Starting gateway on loopback:18789..."
-openclaw gateway --port 18789 --bind loopback &
-GATEWAY_PID=$!
-
-# Wait for either process to exit
-wait -n $SOCAT_PID $GATEWAY_PID
-
-# If one exits, kill the other and exit
-echo "[openclaw-railway] Process exited, shutting down..."
-kill $SOCAT_PID $GATEWAY_PID 2>/dev/null || true
-wait
+exec openclaw gateway --port 18789 --bind loopback

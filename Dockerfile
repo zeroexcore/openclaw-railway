@@ -1,7 +1,7 @@
 FROM node:22-slim
 
-# Install dependencies (socat for secure proxy to loopback)
-RUN apt-get update && apt-get install -y git curl socat && rm -rf /var/lib/apt/lists/*
+# Install dependencies (nginx for auth proxy, apache2-utils for htpasswd)
+RUN apt-get update && apt-get install -y git curl nginx apache2-utils && rm -rf /var/lib/apt/lists/*
 
 # Setup pnpm
 ENV PNPM_HOME="/root/.local/share/pnpm"
