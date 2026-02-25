@@ -9,8 +9,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@latest --activate && \
     mkdir -p $PNPM_HOME
 
-# Install OpenClaw globally
-RUN npm install -g openclaw@latest
+# Install OpenClaw and pm2 globally
+RUN npm install -g openclaw@latest pm2
 
 # Set up directories
 ENV OPENCLAW_STATE_DIR=/data/.openclaw
@@ -24,8 +24,9 @@ WORKDIR /data
 # Expose gateway port
 EXPOSE 8080
 
-# Start script
+# Copy startup files
 COPY start.sh /start.sh
+COPY ecosystem.config.js /ecosystem.config.js
 RUN chmod +x /start.sh
 
 CMD ["/start.sh"]

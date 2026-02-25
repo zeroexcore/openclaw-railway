@@ -95,10 +95,6 @@ openclaw update status || true
 echo "[openclaw-railway] Running doctor..."
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start nginx
-echo "[openclaw-railway] Starting nginx proxy on :8080..."
-nginx
-
-# Start the gateway on loopback (nginx proxies to it)
-echo "[openclaw-railway] Starting gateway on loopback:18789..."
-exec openclaw gateway --port 18789 --bind loopback
+# Start services with pm2
+echo "[openclaw-railway] Starting services with pm2..."
+exec pm2-runtime /ecosystem.config.js
