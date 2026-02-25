@@ -10,8 +10,9 @@ mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 
 # Fix any invalid config from previous runs
 if [ -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
-  if grep -q '"bind": "all"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
-    echo "[openclaw-railway] Found invalid config, resetting..."
+  if grep -q '"bind": "all"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null || \
+     ! grep -q 'dangerouslyAllowHostHeaderOriginFallback' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
+    echo "[openclaw-railway] Found invalid/incomplete config, resetting..."
     rm -f "$OPENCLAW_STATE_DIR/openclaw.json"
   fi
 fi
@@ -32,6 +33,9 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
     "bind": "lan",
     "auth": {
       "mode": "token"
+    },
+    "controlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true
     }
   },
   "agents": {
