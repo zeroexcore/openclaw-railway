@@ -8,11 +8,19 @@ echo "[openclaw-railway] Workspace: $OPENCLAW_WORKSPACE_DIR"
 # Ensure directories exist
 mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 
+# Fix any invalid config from previous runs
+if [ -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
+  if grep -q '"bind": "all"' "$OPENCLAW_STATE_DIR/openclaw.json" 2>/dev/null; then
+    echo "[openclaw-railway] Found invalid config, resetting..."
+    rm -f "$OPENCLAW_STATE_DIR/openclaw.json"
+  fi
+fi
+
 # Initialize config if it doesn't exist
 if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   echo "[openclaw-railway] No config found, running initial setup..."
   
-  # Create minimal config (bind: all for container networking)
+  # Create minimal config (bind: lan for container networking)
   cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
 {
   "update": {
@@ -21,7 +29,7 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   "gateway": {
     "port": 8080,
     "mode": "local",
-    "bind": "all",
+    "bind": "lan",
     "auth": {
       "mode": "token"
     }
@@ -49,6 +57,6 @@ openclaw update status || true
 echo "[openclaw-railway] Running doctor..."
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start the gateway - use "all" binding for containers
+# Start the gateway - use "lan" binding for containers (0.0.0.0)
 echo "[openclaw-railway] Starting gateway on port 8080..."
-exec openclaw gateway --port 8080 --bind all
+exec openclaw gateway --port 8080 --bind lan
