@@ -52,9 +52,13 @@ server {
 }
 EOF
 
+# Determine allowed origins for Control UI
+ALLOWED_ORIGIN="${OPENCLAW_ALLOWED_ORIGIN:-https://openclaw-production-d227.up.railway.app}"
+
 # Create gateway config
 echo "[openclaw-railway] Creating gateway config..."
-cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
+echo "[openclaw-railway] Allowed origin: $ALLOWED_ORIGIN"
+cat > "$OPENCLAW_STATE_DIR/openclaw.json" << EOF
 {
   "update": {
     "channel": "stable"
@@ -68,7 +72,7 @@ cat > "$OPENCLAW_STATE_DIR/openclaw.json" << 'EOF'
     },
     "trustedProxies": ["127.0.0.1"],
     "controlUi": {
-      "dangerouslyAllowHostHeaderOriginFallback": true
+      "allowedOrigins": ["$ALLOWED_ORIGIN"]
     }
   },
   "agents": {
@@ -91,7 +95,13 @@ if [ -n "$MINIMAX_API_KEY" ]; then
   echo "[openclaw-railway] Setting MiniMax credentials..."
   mkdir -p "$OPENCLAW_STATE_DIR/credentials"
   echo "{\"apiKey\": \"$MINIMAX_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/minimax.json"
+  chmod 700 "$OPENCLAW_STATE_DIR/credentials"
+  chmod 600 "$OPENCLAW_STATE_DIR/credentials/minimax.json"
 fi
+
+# Harden state directory permissions
+echo "[openclaw-railway] Hardening permissions..."
+chmod 700 "$OPENCLAW_STATE_DIR"
 
 # Check for updates on startup (non-blocking)
 echo "[openclaw-railway] Checking for updates..."
