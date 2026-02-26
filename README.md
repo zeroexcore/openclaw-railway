@@ -1,112 +1,59 @@
-# OpenClaw Railway Template
+# OpenClaw on Railway
 
-Deploy OpenClaw AI agent gateway on Railway with security hardening and process management.
-
-## Features
-
-- **nginx reverse proxy** with basic auth (required)
-- **pm2 process manager** for resilience
-- Gateway bound to loopback (secure)
-- Health endpoint at `/health`
-- Volume persistence at `/data`
-- Supports OpenCode Zen and MiniMax direct APIs
-- Auto-updates on startup
-
-## Quick Deploy
+Deploy your own AI assistant that you can chat with on Telegram.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/7BxENC?referralCode=ExIdPd&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
-Or manually:
-```bash
-railway init --name openclaw
-railway link
-railway add --repo zeroexcore/openclaw-railway
-railway volume add --mount-path /data
-railway domain --port 8080
-```
+## Before You Start
 
-## Required Variables
+You'll need to set up a few accounts and grab some tokens. This takes about 10 minutes.
 
-| Variable | Description |
-|----------|-------------|
-| `PROXY_USER` | Basic auth username |
-| `PROXY_PASS` | Basic auth password |
-| `OPENCLAW_GATEWAY_TOKEN` | Gateway API token (64 char hex) |
+### 1. Create a Railway Account
 
-## Optional Variables
+1. Go to [railway.com](https://railway.com) and sign up
+2. Add a payment method (required for deployments, but this template uses minimal resources)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OPENCODE_API_KEY` | - | OpenCode Zen API key (recommended, free tier available) |
-| `MINIMAX_API_KEY` | - | MiniMax direct API key (fallback) |
-| `OPENCLAW_MODEL` | auto | Override model (e.g., `opencode/minimax-m2.5-free`) |
-| `TELEGRAM_BOT_TOKEN` | - | Telegram bot token from @BotFather |
-| `TELEGRAM_ALLOW_FROM` | - | Pre-approved Telegram user ID |
-| `OPENCLAW_ALLOWED_ORIGIN` | Railway URL | Control UI allowed origin |
-| `OPENCLAW_STATE_DIR` | `/data/.openclaw` | Config storage |
-| `OPENCLAW_WORKSPACE_DIR` | `/data/workspace` | Agent workspace |
+### 2. Get Your OpenCode Zen API Key (Free)
 
-### Telegram Setup
+This powers the AI. Free tier available for 7 days.
 
-Set `TELEGRAM_BOT_TOKEN` and optionally `TELEGRAM_ALLOW_FROM` to have Telegram ready on first deploy:
+1. Go to [opencode.ai/auth](https://opencode.ai/auth)
+2. Sign in and create an API key
+3. Copy the key (starts with `sk-...`)
 
-```bash
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_ALLOW_FROM=572012316
-```
+### 3. Create a Telegram Bot
 
-Get your Telegram user ID by messaging [@userinfobot](https://t.me/userinfobot).
+1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
+2. Send `/newbot` and follow the prompts to name your bot
+3. Copy the bot token (looks like `123456789:ABCdefGHI...`)
 
-### Model Selection
+### 4. Get Your Telegram User ID
 
-The template auto-selects the model based on available API keys:
-1. If `OPENCODE_API_KEY` is set → uses `opencode/minimax-m2.5-free`
-2. If `MINIMAX_API_KEY` is set → uses `minimax/MiniMax-M2.1`
-3. Override with `OPENCLAW_MODEL` env var
+1. Open Telegram and search for [@userinfobot](https://t.me/userinfobot)
+2. Send any message to it
+3. Copy your numeric user ID
 
-## Generate Credentials
+## Deploy
 
-```bash
-# Generate gateway token
-openssl rand -hex 32
+1. Click the **Deploy on Railway** button above
+2. Fill in the variables:
 
-# Generate proxy password  
-openssl rand -base64 24
-```
+| Variable | What to enter |
+|----------|---------------|
+| `OPENCODE_API_KEY` | Your OpenCode Zen API key |
+| `TELEGRAM_BOT_TOKEN` | Your bot token from BotFather |
+| `TELEGRAM_ALLOW_FROM` | Your Telegram user ID |
 
-## After Deploy
+3. Click **Deploy**
+4. Wait 2-3 minutes for the build to complete
 
-1. Access Control UI at `https://your-domain.up.railway.app`
-2. Login with basic auth credentials
-3. Approve device pairing when prompted
-4. Configure model/channels via CLI:
+## Start Chatting
 
-```bash
-railway ssh -- "openclaw plugins enable telegram"
-railway ssh -- "openclaw channels add --channel telegram --token <BOT_TOKEN>"
-railway ssh -- "pm2 restart openclaw"
-```
+Once deployed, open Telegram and send a message to your bot. It should respond!
 
-## Architecture
+Your credentials (username/password for the web dashboard) will appear in the deployment logs.
 
-```
-Internet → nginx:8080 (basic auth) → openclaw:18789 (loopback)
-                                   ↑
-                              pm2 manages both
-```
+## Need Help?
 
-## Troubleshooting
-
-```bash
-# Check status
-railway ssh -- "pm2 status"
-
-# View logs
-railway ssh -- "pm2 logs openclaw --lines 50"
-
-# Restart cleanly
-railway ssh -- "pm2 restart openclaw"
-
-# Security audit
-railway ssh -- "openclaw security audit"
-```
+- [OpenClaw Documentation](https://docs.openclaw.ai)
+- [Railway Documentation](https://docs.railway.com)
