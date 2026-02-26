@@ -81,7 +81,15 @@ fi
 echo "[openclaw-railway] Model: $OPENCLAW_MODEL"
 
 # Generate gateway config
-export ALLOWED_ORIGIN="${OPENCLAW_ALLOWED_ORIGIN:-https://openclaw-production-d227.up.railway.app}"
+# Use Railway's auto-provided domain, or allow override
+if [ -n "$OPENCLAW_ALLOWED_ORIGIN" ]; then
+  export ALLOWED_ORIGIN="$OPENCLAW_ALLOWED_ORIGIN"
+elif [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
+  export ALLOWED_ORIGIN="https://$RAILWAY_PUBLIC_DOMAIN"
+else
+  export ALLOWED_ORIGIN="*"
+fi
+echo "[openclaw-railway] Allowed origin: $ALLOWED_ORIGIN"
 envsubst '${ALLOWED_ORIGIN} ${OPENCLAW_MODEL}' < /openclaw.json.template > "$OPENCLAW_STATE_DIR/openclaw.json"
 
 # Set gateway token

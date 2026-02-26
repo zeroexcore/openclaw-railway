@@ -7,9 +7,10 @@ server {
     listen 8080;
     
     # Health check (no auth - for Railway healthcheck)
-    location /health {
-        return 200 'ok';
+    location = /health {
+        access_log off;
         add_header Content-Type text/plain;
+        return 200 'ok';
     }
     
     location / {
