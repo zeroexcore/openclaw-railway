@@ -25,9 +25,11 @@ WORKDIR /data
 # Expose gateway port
 EXPOSE 8080
 
-# Copy startup files
-COPY start.sh /start.sh
+# Copy config templates and startup files
+COPY nginx.conf.template /nginx.conf.template
+COPY openclaw.json.template /openclaw.json.template
 COPY ecosystem.config.js /ecosystem.config.js
+COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
 CMD ["/start.sh"]

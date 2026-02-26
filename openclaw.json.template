@@ -1,0 +1,26 @@
+{
+  "update": {
+    "channel": "stable"
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "reload": {
+      "mode": "hot"
+    },
+    "auth": {
+      "mode": "token"
+    },
+    "trustedProxies": ["127.0.0.1"],
+    "controlUi": {
+      "allowedOrigins": ["${ALLOWED_ORIGIN}"]
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": "${OPENCLAW_MODEL:-minimax/MiniMax-M2.1}",
+      "workspace": "/data/workspace"
+    }
+  }
+}
