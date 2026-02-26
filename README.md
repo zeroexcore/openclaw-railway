@@ -1,19 +1,22 @@
 # OpenClaw Railway Template
 
-Deploy OpenClaw on Railway with security hardening and process management.
+Deploy OpenClaw AI agent gateway on Railway with security hardening and process management.
 
 ## Features
 
-- **nginx reverse proxy** with basic auth
+- **nginx reverse proxy** with basic auth (required)
 - **pm2 process manager** for resilience
 - Gateway bound to loopback (secure)
 - Health endpoint at `/health`
 - Volume persistence at `/data`
+- Supports OpenCode Zen and MiniMax direct APIs
 - Auto-updates on startup
 
 ## Quick Deploy
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/zeroexcore/openclaw-railway)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/TEMPLATE_CODE?referralCode=zeroexcore)
+
+> **Note:** Replace `TEMPLATE_CODE` with actual code after publishing template.
 
 Or manually:
 ```bash
@@ -36,10 +39,19 @@ railway domain --port 8080
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MINIMAX_API_KEY` | - | MiniMax LLM API key |
+| `OPENCODE_API_KEY` | - | OpenCode Zen API key (recommended, free tier available) |
+| `MINIMAX_API_KEY` | - | MiniMax direct API key (fallback) |
+| `OPENCLAW_MODEL` | auto | Override model (e.g., `opencode/minimax-m2.5-free`) |
 | `OPENCLAW_ALLOWED_ORIGIN` | Railway URL | Control UI allowed origin |
 | `OPENCLAW_STATE_DIR` | `/data/.openclaw` | Config storage |
 | `OPENCLAW_WORKSPACE_DIR` | `/data/workspace` | Agent workspace |
+
+### Model Selection
+
+The template auto-selects the model based on available API keys:
+1. If `OPENCODE_API_KEY` is set → uses `opencode/minimax-m2.5-free`
+2. If `MINIMAX_API_KEY` is set → uses `minimax/MiniMax-M2.1`
+3. Override with `OPENCLAW_MODEL` env var
 
 ## Generate Credentials
 
