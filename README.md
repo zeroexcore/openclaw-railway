@@ -29,7 +29,7 @@ This powers the AI. Free tier available for 7 days.
 
 ### 4. Get Your Telegram User ID
 
-1. Open Telegram and search for [@userinfobot](https://t.me/userinfobot)
+1. Open Telegram and search for [@Getmyid_bot](https://t.me/Getmyid_bot)
 2. Send any message to it
 3. Copy your numeric user ID
 
