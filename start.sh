@@ -111,6 +111,47 @@ if [ -n "$MINIMAX_API_KEY" ]; then
   chmod 600 "$OPENCLAW_STATE_DIR/credentials/minimax.json"
 fi
 
+# Configure Telegram if bot token is provided
+if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+  echo "[openclaw-railway] Telegram: Configuring bot..."
+  
+  # Enable telegram plugin
+  openclaw plugins enable telegram 2>/dev/null || true
+  
+  # Set bot token in config
+  openclaw config set channels.telegram.enabled true 2>/dev/null || true
+  openclaw config set channels.telegram.botToken "$TELEGRAM_BOT_TOKEN" 2>/dev/null || true
+  openclaw config set channels.telegram.dmPolicy "pairing" 2>/dev/null || true
+  
+  # Pre-approve Telegram users if TELEGRAM_ALLOW_FROM is set
+  # Format: comma-separated user IDs, e.g., "572012316,123456789"
+  if [ -n "$TELEGRAM_ALLOW_FROM" ]; then
+    echo "[openclaw-railway] Telegram: Pre-approving users: $TELEGRAM_ALLOW_FROM"
+    
+    # Convert comma-separated to JSON array
+    ALLOW_ARRAY=$(echo "$TELEGRAM_ALLOW_FROM" | sed 's/,/","/g')
+    
+    cat > "$OPENCLAW_STATE_DIR/credentials/telegram-default-allowFrom.json" << EOF
+{
+  "version": 1,
+  "allowFrom": ["$ALLOW_ARRAY"]
+}
+EOF
+    chmod 600 "$OPENCLAW_STATE_DIR/credentials/telegram-default-allowFrom.json"
+    
+    # Initialize empty pairing requests
+    cat > "$OPENCLAW_STATE_DIR/credentials/telegram-pairing.json" << EOF
+{
+  "version": 1,
+  "requests": []
+}
+EOF
+    chmod 600 "$OPENCLAW_STATE_DIR/credentials/telegram-pairing.json"
+  fi
+  
+  echo "[openclaw-railway] Telegram: Bot configured"
+fi
+
 # Harden permissions
 chmod 700 "$OPENCLAW_STATE_DIR"
 

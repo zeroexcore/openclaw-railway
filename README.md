@@ -40,9 +40,22 @@ railway domain --port 8080
 | `OPENCODE_API_KEY` | - | OpenCode Zen API key (recommended, free tier available) |
 | `MINIMAX_API_KEY` | - | MiniMax direct API key (fallback) |
 | `OPENCLAW_MODEL` | auto | Override model (e.g., `opencode/minimax-m2.5-free`) |
+| `TELEGRAM_BOT_TOKEN` | - | Telegram bot token from @BotFather |
+| `TELEGRAM_ALLOW_FROM` | - | Pre-approved Telegram user IDs (comma-separated) |
 | `OPENCLAW_ALLOWED_ORIGIN` | Railway URL | Control UI allowed origin |
 | `OPENCLAW_STATE_DIR` | `/data/.openclaw` | Config storage |
 | `OPENCLAW_WORKSPACE_DIR` | `/data/workspace` | Agent workspace |
+
+### Telegram Setup
+
+Set `TELEGRAM_BOT_TOKEN` and optionally `TELEGRAM_ALLOW_FROM` to have Telegram ready on first deploy:
+
+```bash
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+TELEGRAM_ALLOW_FROM=572012316,123456789
+```
+
+Get your Telegram user ID by messaging [@userinfobot](https://t.me/userinfobot).
 
 ### Model Selection
 
