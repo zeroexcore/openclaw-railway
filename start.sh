@@ -1,16 +1,67 @@
 #!/bin/bash
 set -e
 
-echo "[openclaw-railway] Starting OpenClaw Gateway..."
+echo "=============================================="
+echo "[openclaw-railway] Starting OpenClaw Gateway"
+echo "=============================================="
 
 # Ensure directories exist
 mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 
-# Setup nginx basic auth (required)
-if [ -z "$PROXY_USER" ] || [ -z "$PROXY_PASS" ]; then
-  echo "[openclaw-railway] ERROR: PROXY_USER and PROXY_PASS are required"
-  exit 1
+# Credentials file for persistence across restarts
+CREDS_FILE="$OPENCLAW_STATE_DIR/.credentials"
+
+# Auto-generate or load credentials
+if [ -f "$CREDS_FILE" ]; then
+  echo "[openclaw-railway] Loading existing credentials..."
+  source "$CREDS_FILE"
+else
+  echo "[openclaw-railway] Generating new credentials..."
 fi
+
+# PROXY_USER - default to "openclaw" if not set
+if [ -z "$PROXY_USER" ]; then
+  PROXY_USER="openclaw"
+fi
+export PROXY_USER
+
+# PROXY_PASS - auto-generate if not set
+if [ -z "$PROXY_PASS" ]; then
+  PROXY_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
+fi
+export PROXY_PASS
+
+# OPENCLAW_GATEWAY_TOKEN - auto-generate if not set
+if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
+  OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
+fi
+export OPENCLAW_GATEWAY_TOKEN
+
+# Save credentials for persistence
+cat > "$CREDS_FILE" << EOF
+PROXY_USER="$PROXY_USER"
+PROXY_PASS="$PROXY_PASS"
+OPENCLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN"
+EOF
+chmod 600 "$CREDS_FILE"
+
+# Log credentials prominently
+echo ""
+echo "=============================================="
+echo "  OPENCLAW CREDENTIALS (save these!)"
+echo "=============================================="
+echo ""
+echo "  Basic Auth (for Control UI access):"
+echo "    Username: $PROXY_USER"
+echo "    Password: $PROXY_PASS"
+echo ""
+echo "  Gateway Token (for API access):"
+echo "    $OPENCLAW_GATEWAY_TOKEN"
+echo ""
+echo "=============================================="
+echo ""
+
+# Setup nginx basic auth
 htpasswd -cb /etc/nginx/.htpasswd "$PROXY_USER" "$PROXY_PASS"
 
 # Copy nginx config
@@ -25,32 +76,29 @@ elif [ -n "$OPENCODE_API_KEY" ]; then
 elif [ -n "$MINIMAX_API_KEY" ]; then
   export OPENCLAW_MODEL="minimax/MiniMax-M2.1"
 else
-  export OPENCLAW_MODEL="opencode/minimax-m2.5-free"  # fallback
+  export OPENCLAW_MODEL="opencode/minimax-m2.5-free"
 fi
-echo "[openclaw-railway] Using model: $OPENCLAW_MODEL"
+echo "[openclaw-railway] Model: $OPENCLAW_MODEL"
 
 # Generate gateway config
 export ALLOWED_ORIGIN="${OPENCLAW_ALLOWED_ORIGIN:-https://openclaw-production-d227.up.railway.app}"
 envsubst '${ALLOWED_ORIGIN} ${OPENCLAW_MODEL}' < /openclaw.json.template > "$OPENCLAW_STATE_DIR/openclaw.json"
 
 # Set gateway token
-if [ -n "$OPENCLAW_GATEWAY_TOKEN" ]; then
-  openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" 2>/dev/null || true
-fi
+openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" 2>/dev/null || true
 
 # Set API credentials
-# Priority: OpenCode Zen (opencode/*) > MiniMax direct (minimax/*)
 mkdir -p "$OPENCLAW_STATE_DIR/credentials"
 chmod 700 "$OPENCLAW_STATE_DIR/credentials"
 
 if [ -n "$OPENCODE_API_KEY" ]; then
-  echo "[openclaw-railway] Using OpenCode Zen API"
+  echo "[openclaw-railway] API: OpenCode Zen"
   echo "{\"apiKey\": \"$OPENCODE_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/opencode.json"
   chmod 600 "$OPENCLAW_STATE_DIR/credentials/opencode.json"
 fi
 
 if [ -n "$MINIMAX_API_KEY" ]; then
-  echo "[openclaw-railway] Using MiniMax direct API"
+  echo "[openclaw-railway] API: MiniMax direct"
   echo "{\"apiKey\": \"$MINIMAX_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/minimax.json"
   chmod 600 "$OPENCLAW_STATE_DIR/credentials/minimax.json"
 fi
@@ -61,5 +109,5 @@ chmod 700 "$OPENCLAW_STATE_DIR"
 # Doctor check
 openclaw doctor --fix --yes 2>/dev/null || true
 
-# Start
+echo "[openclaw-railway] Starting services..."
 exec pm2-runtime /ecosystem.config.js
