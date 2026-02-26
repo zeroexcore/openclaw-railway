@@ -1,9 +1,15 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "dockerfile"
 
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-restartPolicyType = "ON_FAILURE"
+restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+
+# Require a persistent volume mounted at /data
+requiredMountPath = "/data"
+
+[variables]
+OPENCLAW_STATE_DIR = "/data/.openclaw"
+OPENCLAW_WORKSPACE_DIR = "/data/workspace"
