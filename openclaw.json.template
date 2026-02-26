@@ -14,7 +14,8 @@
     },
     "trustedProxies": ["127.0.0.1"],
     "controlUi": {
-      "allowedOrigins": ["${ALLOWED_ORIGIN}"]
+      "allowedOrigins": ["${ALLOWED_ORIGIN}"],
+      "allowInsecureAuth": true
     }
   },
   "agents": {
