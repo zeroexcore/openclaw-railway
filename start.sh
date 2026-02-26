@@ -25,12 +25,12 @@ if [ -n "$OPENCLAW_GATEWAY_TOKEN" ]; then
   openclaw config set gateway.auth.token "$OPENCLAW_GATEWAY_TOKEN" 2>/dev/null || true
 fi
 
-# Set MiniMax API key
-if [ -n "$MINIMAX_API_KEY" ]; then
+# Set OpenCode Zen API key (for opencode/* models)
+if [ -n "$OPENCODE_API_KEY" ]; then
   mkdir -p "$OPENCLAW_STATE_DIR/credentials"
-  echo "{\"apiKey\": \"$MINIMAX_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/minimax.json"
+  echo "{\"apiKey\": \"$OPENCODE_API_KEY\"}" > "$OPENCLAW_STATE_DIR/credentials/opencode.json"
   chmod 700 "$OPENCLAW_STATE_DIR/credentials"
-  chmod 600 "$OPENCLAW_STATE_DIR/credentials/minimax.json"
+  chmod 600 "$OPENCLAW_STATE_DIR/credentials/opencode.json"
 fi
 
 # Harden permissions

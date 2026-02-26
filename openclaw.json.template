@@ -19,7 +19,7 @@
   },
   "agents": {
     "defaults": {
-      "model": "${OPENCLAW_MODEL:-minimax/MiniMax-M2.1}",
+      "model": "${OPENCLAW_MODEL:-opencode/minimax-m2.5-free}",
       "workspace": "/data/workspace"
     }
   }
