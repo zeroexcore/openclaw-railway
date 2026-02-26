@@ -14,7 +14,7 @@ Deploy OpenClaw AI agent gateway on Railway with security hardening and process 
 
 ## Quick Deploy
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/7BxENC?referralCode=ExIdPd)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/7BxENC?referralCode=ExIdPd)
 
 Or manually:
 ```bash
