@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# Cache bust: 2026-02-28-v4
-# Install dependencies (nginx-full for sub_filter, python3/build-essential for VibeTunnel native deps)
-RUN apt-get update && apt-get install -y git curl nginx-full apache2-utils gettext-base python3 build-essential && rm -rf /var/lib/apt/lists/*
+# Cache bust: 2026-02-28-v5
+# Install dependencies (nginx-full for sub_filter, python3/build-essential/libpam0g-dev for VibeTunnel native deps)
+RUN apt-get update && apt-get install -y git curl nginx-full apache2-utils gettext-base python3 build-essential libpam0g-dev && rm -rf /var/lib/apt/lists/*
 
 # Setup pnpm
 ENV PNPM_HOME="/root/.local/share/pnpm"
