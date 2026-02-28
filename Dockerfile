@@ -10,7 +10,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@latest --activate && \
     mkdir -p $PNPM_HOME
 
-# Install OpenClaw, pm2, and VibeTunnel globally
+# Install OpenClaw, pm2, and VibeTunnel globally (cache bust: 2026-02-28-v3)
 RUN npm install -g openclaw@latest pm2 vibetunnel
 
 # Set up directories
