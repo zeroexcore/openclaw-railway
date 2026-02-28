@@ -25,7 +25,7 @@ module.exports = {
     {
       name: 'ttyd',
       script: '/usr/local/bin/ttyd',
-      args: '-p 4030 -i 127.0.0.1 -W /bin/bash',
+      args: '-p 4030 -i 127.0.0.1 -W -b /terminal /bin/bash',
       interpreter: 'none',
       autorestart: true,
       watch: false,
