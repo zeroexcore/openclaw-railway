@@ -22,5 +22,19 @@ module.exports = {
         OPENCLAW_WORKSPACE_DIR: '/data/workspace',
       },
     },
+    {
+      name: 'vibetunnel',
+      script: '/usr/local/bin/vibetunnel',
+      args: '--port 4030 --bind 127.0.0.1 --no-auth',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      restart_delay: 3000,
+      max_restarts: 10,
+      env: {
+        HOME: '/data',
+        VIBETUNNEL_LOG_LEVEL: 'error',
+      },
+    },
   ],
 };

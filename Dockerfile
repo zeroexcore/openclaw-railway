@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# Cache bust: 2026-02-26-v1
-# Install dependencies (nginx for auth proxy, apache2-utils for htpasswd, gettext for envsubst)
-RUN apt-get update && apt-get install -y git curl nginx apache2-utils gettext-base && rm -rf /var/lib/apt/lists/*
+# Cache bust: 2026-02-28-v2
+# Install dependencies (nginx-full for sub_filter module, apache2-utils for htpasswd, gettext for envsubst)
+RUN apt-get update && apt-get install -y git curl nginx-full apache2-utils gettext-base && rm -rf /var/lib/apt/lists/*
 
 # Setup pnpm
 ENV PNPM_HOME="/root/.local/share/pnpm"
@@ -10,8 +10,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@latest --activate && \
     mkdir -p $PNPM_HOME
 
-# Install OpenClaw and pm2 globally
-RUN npm install -g openclaw@latest pm2
+# Install OpenClaw, pm2, and VibeTunnel globally
+RUN npm install -g openclaw@latest pm2 vibetunnel
 
 # Set up directories
 ENV OPENCLAW_STATE_DIR=/data/.openclaw
