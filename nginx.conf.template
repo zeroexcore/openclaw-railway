@@ -29,7 +29,7 @@ server {
         proxy_send_timeout 86400;
     }
     
-    # VibeTunnel web terminal at /terminal
+    # ttyd web terminal at /terminal
     location = /terminal {
         return 301 /terminal/;
     }
@@ -51,20 +51,5 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 86400;
         proxy_send_timeout 86400;
-        
-        # URL rewriting for assets (sub_filter module)
-        sub_filter_types text/html application/javascript text/css application/json;
-        sub_filter_once off;
-        sub_filter 'href="/' 'href="/terminal/';
-        sub_filter "href='/" "href='/terminal/";
-        sub_filter 'src="/' 'src="/terminal/';
-        sub_filter "src='/" "src='/terminal/";
-        sub_filter 'url(/' 'url(/terminal/';
-        sub_filter '"/api/' '"/terminal/api/';
-        sub_filter "'/api/" "'/terminal/api/";
-        sub_filter '"/ws"' '"/terminal/ws"';
-        sub_filter "'/ws'" "'/terminal/ws'";
-        sub_filter 'url:"/ws"' 'url:"/terminal/ws"';
-        sub_filter "url:'/ws'" "url:'/terminal/ws'";
     }
 }

@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# Cache bust: 2026-02-28-v5
-# Install dependencies (nginx-full for sub_filter, python3/build-essential/libpam0g-dev for VibeTunnel native deps)
-RUN apt-get update && apt-get install -y git curl nginx-full apache2-utils gettext-base python3 build-essential libpam0g-dev && rm -rf /var/lib/apt/lists/*
+# Cache bust: 2026-02-28-v6
+# Install dependencies (nginx-full for sub_filter module)
+RUN apt-get update && apt-get install -y git curl nginx-full apache2-utils gettext-base && rm -rf /var/lib/apt/lists/*
 
 # Setup pnpm
 ENV PNPM_HOME="/root/.local/share/pnpm"
@@ -10,8 +10,12 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@latest --activate && \
     mkdir -p $PNPM_HOME
 
-# Install OpenClaw, pm2, and VibeTunnel globally (cache bust: 2026-02-28-v3)
-RUN npm install -g openclaw@latest pm2 vibetunnel
+# Install OpenClaw and pm2 globally
+RUN npm install -g openclaw@latest pm2
+
+# Install ttyd (prebuilt binary) for web terminal
+RUN curl -L https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64 -o /usr/local/bin/ttyd && \
+    chmod +x /usr/local/bin/ttyd
 
 # Set up directories
 ENV OPENCLAW_STATE_DIR=/data/.openclaw

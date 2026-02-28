@@ -23,18 +23,15 @@ module.exports = {
       },
     },
     {
-      name: 'vibetunnel',
-      script: '/usr/local/bin/vibetunnel',
-      args: '--port 4030 --bind 127.0.0.1 --no-auth',
+      name: 'ttyd',
+      script: '/usr/local/bin/ttyd',
+      args: '-p 4030 -i 127.0.0.1 -W /bin/bash',
       interpreter: 'none',
       autorestart: true,
       watch: false,
       restart_delay: 3000,
       max_restarts: 10,
-      env: {
-        HOME: '/data',
-        VIBETUNNEL_LOG_LEVEL: 'error',
-      },
+      cwd: '/data/workspace',
     },
   ],
 };
